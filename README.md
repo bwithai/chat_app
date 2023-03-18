@@ -19,7 +19,7 @@ go mod download
 go run main.go
 ```
 ### OR run with binary file 
-creates a binary executable file named main in the working directory (/app in this case). This binary file contains the compiled version of your entire Go application, not just the main.go file.
+creates a binary executable file named main in the working directory (/chatapp in this case). This binary file contains the compiled version of your entire Go application, not just the main.go file.
 ```bash
 # After go mod download
 # Build the binary
