@@ -22,6 +22,14 @@ func NewDatabase() (*Database, error) {
 	//db.AutoMigrate(&ws.DbRoom{})
 	db.AutoMigrate(&ws.DbMessage{})
 
+	//err = db.Exec("DELETE FROM users").Error
+	//if err != nil {
+	//	return nil, err
+	//}
+	//err = db.Exec("DELETE FROM db_messages").Error
+	//if err != nil {
+	//	return nil, err
+	//}
 	err = db.Exec("DELETE FROM users").Error
 	if err != nil {
 		return nil, err
