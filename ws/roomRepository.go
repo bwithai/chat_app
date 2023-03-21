@@ -14,7 +14,7 @@ func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) saveMessage(ctx context.Context, message *DbMessage) (*DbMessage, error) {
+func (r *repository) SaveMessage(ctx context.Context, message *DbMessage) (*DbMessage, error) {
 	result := r.db.WithContext(ctx).Create(message)
 	if result.Error != nil {
 		return nil, result.Error
@@ -22,7 +22,7 @@ func (r *repository) saveMessage(ctx context.Context, message *DbMessage) (*DbMe
 	return message, nil
 }
 
-func (r *repository) finedMessagesByRoomID(roomId string) ([]DbMessage, error) {
+func (r *repository) FinedMessagesByRoomID(roomId string) ([]DbMessage, error) {
 	var messages []DbMessage
 	result := r.db.Where("room_id = ?", roomId).Find(&messages)
 	if result.Error != nil {
@@ -48,8 +48,8 @@ func (r *repository) GetUserById(userId string) (*user.User, error) {
 }
 
 type Repository interface {
-	saveMessage(ctx context.Context, message *DbMessage) (*DbMessage, error)
-	finedMessagesByRoomID(roomId string) ([]DbMessage, error)
+	SaveMessage(ctx context.Context, message *DbMessage) (*DbMessage, error)
+	FinedMessagesByRoomID(roomId string) ([]DbMessage, error)
 	GetUserById(userId string) (*user.User, error)
 	//CreateUser(ctx context.Context, user *User) (*User, error)
 	//GetUserByEmail(ctx context.Context, email string) (*User, error)

@@ -13,6 +13,7 @@ import (
 )
 
 type Handler struct {
+	*Client
 	Repository
 	hub *Hub
 }
@@ -89,6 +90,7 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	roomID := mux.Vars(r)["roomId"]
 	clientID := mux.Vars(r)["userID"]
 	tokenStr := r.Header.Get("Token")
+
 	if tokenStr == "" {
 		err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Add JWT Token at http header request")))
 		defer conn.Close()
@@ -101,9 +103,12 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 	//clientID := r.URL.Query().Get("userId")
 
-	status, _ := auth_jwt.VaalidateJWT(tokenStr, clientID)
+	status, stCode := auth_jwt.VaalidateJWT(tokenStr, clientID)
 
 	if status != "authorized" {
+		if stCode == 11111 {
+			fmt.Fprintf(w, "Token signature is not for User %v", clientID)
+		}
 		err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Un Authorized user_id: %v", clientID)))
 		defer conn.Close()
 		if err != nil {
@@ -115,7 +120,7 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.checkRoomId(roomID) != true {
-		err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Room Id: %v is not created", roomID)))
+		err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Room: %v is not created", roomID)))
 		defer conn.Close()
 		if err != nil {
 			log.Println(err)
@@ -153,30 +158,43 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	h.hub.Register <- cl
 	h.hub.Broadcast <- m
 
+	h.hub.Register <- cl
+	h.hub.Broadcast <- m
+
 	go cl.writeMessage()
-	msgChan := make(chan *Message)
-	go cl.readMessage(h.hub, r.Context(), msgChan)
-	message := <-msgChan
+	defer func() {
+		h.hub.Unregister <- cl
+		cl.Conn.Close()
+	}()
+	for {
+		_, m, err := cl.Conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
 
-	//message := cl.readMessage(h.hub, r.Context())
+		msg := &Message{
+			Content:  string(m),
+			RoomID:   cl.RoomID,
+			Username: cl.Username,
+		}
+		mcj := &DbMessage{
+			Content:  msg.Content,
+			RoomID:   msg.RoomID,
+			UserID:   msg.UserID,
+			Username: msg.Username,
+		}
 
-	msg := &DbMessage{
-		Content:  message.Content,
-		RoomID:   message.RoomID,
-		UserID:   message.UserID,
-		Username: message.Username,
+		_, err2 := h.Repository.SaveMessage(r.Context(), mcj)
+		if err2 != nil {
+			fmt.Println(err2.Error())
+			return
+		}
+
+		h.hub.Broadcast <- msg
 	}
-
-	_, err2 := h.Repository.saveMessage(r.Context(), msg)
-	if err2 != nil {
-		return
-	}
-}
-
-type RoomRes struct {
-	ID    string      `json:"id"`
-	Name  string      `json:"name"`
-	Users []ClientRes `json:"users"`
 }
 
 func (h *Handler) GetRoom(w http.ResponseWriter, r *http.Request) {
@@ -196,6 +214,12 @@ func (h *Handler) GetRoom(w http.ResponseWriter, r *http.Request) {
 
 	// If no room is found, return a 404 error.
 	w.WriteHeader(http.StatusNotFound)
+}
+
+type RoomRes struct {
+	ID    string      `json:"id"`
+	Name  string      `json:"name"`
+	Users []ClientRes `json:"users"`
 }
 
 func (h *Handler) GetRooms(w http.ResponseWriter, r *http.Request) {
@@ -241,11 +265,17 @@ type CreateMassageRes struct {
 	RoomID  string
 	CreatAt time.Time
 }
+type CreateMassageReq struct {
+	Text    string
+	UserID  string
+	RoomID  string
+	CreatAt time.Time
+}
 
 func (h *Handler) GetRoomMessages(w http.ResponseWriter, r *http.Request) {
 	roomId := mux.Vars(r)["roomId"]
 
-	messages, err := h.Repository.finedMessagesByRoomID(roomId)
+	messages, err := h.Repository.FinedMessagesByRoomID(roomId)
 	if err != nil {
 		log.Printf("error: %v", err)
 	}

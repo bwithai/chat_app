@@ -62,12 +62,12 @@ func VaalidateJWT(tokenStr string, reqUserID string) (string, int) {
 
 	userID, ok := claims["sub"].(string)
 	if !ok {
-		status := http.StatusUnauthorized
 		meassage := "not authorized"
-		return meassage, status
+		return meassage, 11111
 	}
 
 	if reqUserID != userID {
+
 		status := http.StatusUnauthorized
 		meassage := "not authorized"
 		return meassage, status
@@ -117,6 +117,7 @@ func ValidateJWT(next http.Handler) http.Handler {
 
 		reqUserID := mux.Vars(r)["userID"]
 		if reqUserID != userID {
+			fmt.Fprintf(w, "Token signature is not for User %v\n", reqUserID)
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte("not authorized"))
 			return
