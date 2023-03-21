@@ -7,10 +7,11 @@ import (
 
 type User struct {
 	gorm.Model
-	ID       int64  `json:"id"`
+	UserID   int64  `gorm:"primaryKey;autoIncrement"`
 	Username string `json:"username"`
-	Email    string `json:"email"`
+	Email    string `json:"email" gorm:"unique"`
 	Password string `json:"password"`
+	Token    string `json:"token"`
 }
 
 type CreateUserReq struct {

@@ -46,13 +46,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	u.accessToken = auth_jwt.GetJwt(r)
-	if u.accessToken == "" {
-		fmt.Fprint(w, "Create Token: Use Access as key and 1234 as value in request body")
-		return
-	}
-
+	u.accessToken = auth_jwt.GetJwt(u.ID)
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
 		Value:    u.accessToken,
@@ -62,10 +56,18 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: false,
 		Secure:   true,
 	})
-	json.NewEncoder(w).Encode(u)
+	json.NewEncoder(w).Encode(u.accessToken)
 }
 
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	tokenStr := r.Header.Get("Token")
+	fmt.Println(tokenStr)
+	jwt, err := auth_jwt.RemoveAuthorizationFromJWT(tokenStr)
+	if err != nil {
+		fmt.Println("new token err")
+	}
+	fmt.Println(jwt)
+	r.Header.Set("Token", jwt)
 	http.SetCookie(w, &http.Cookie{
 		Name:     "jwt",
 		Value:    "",

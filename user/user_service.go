@@ -65,6 +65,5 @@ func (s *service) Login(c context.Context, req *LoginUserReq) (*LoginUserRes, er
 	if err != nil {
 		return &LoginUserRes{}, err
 	}
-
 	return &LoginUserRes{Username: u.Username, ID: strconv.Itoa(int(u.ID))}, nil
 }

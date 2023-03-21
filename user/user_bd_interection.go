@@ -23,7 +23,7 @@ func (r *repository) CreateUser(ctx context.Context, user *User) (*User, error) 
 
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	var u User
-	result := r.db.WithContext(ctx).Where("email = ?", email).First(&u)
+	result := r.db.WithContext(ctx).Where("email = ?", email).First(&u).Update("user_id", u.ID)
 	if result.Error != nil {
 		return nil, result.Error
 	}
