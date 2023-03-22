@@ -43,6 +43,17 @@ func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if h.checkRoomId(req.ID) == true {
+		fmt.Fprintln(w, "Room already exist")
+		return
+	}
+	for _, r := range h.hub.Rooms {
+		if r.Name == req.Name {
+			fmt.Fprintf(w, "Room already exist with id %v\n", req.ID)
+			return
+		}
+	}
+
 	h.hub.Rooms[req.ID] = &Room{
 		ID:      req.ID,
 		Name:    req.Name,
@@ -50,7 +61,7 @@ func (h *Handler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := &CreateRoomRes{
-		ID:   req.ID,
+		//ID:   req.ID,
 		Name: req.Name,
 	}
 
@@ -108,6 +119,7 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 	if status != "authorized" {
 		if stCode == 11111 {
 			fmt.Fprintf(w, "Token signature is not for User %v", clientID)
+			return
 		}
 		err = conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("Un Authorized user_id: %v", clientID)))
 		defer conn.Close()
@@ -154,9 +166,6 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 		UserID:   strconv.Itoa(int(user.ID)),
 		Username: user.Username,
 	}
-
-	h.hub.Register <- cl
-	h.hub.Broadcast <- m
 
 	h.hub.Register <- cl
 	h.hub.Broadcast <- m

@@ -27,6 +27,43 @@ go build -o main .
 # Run the binary
 ./main
 ```
+# End Points
+At Each time on application run. I refresh the database to delete all previous data. you can change it at `db/db.go`
+#### 1. http://localhost:8000/api/register 
+Allows a user to create an account.
+
+#### 2. http://localhost:8000/api/login 
+Allows a user to log in to their account. and set jwt cookies for front-end developer. login body ` {
+"email": "example@gmail.com",
+"password": "password"
+}`
+
+#### NoTe :
+Once user login, It will Use the resources if it authorized, Keep in mind `ADD 'Token' as a key and 'JWT token' as value into http.Header` otherwise will be unauthorized for resources.
+
+After login the path `/api/users/{userID}/profile` will be use for checking the Authorization like: users having profile `{userID}` Authorized for `...`
+
+#### 3. http://localhost:8000/api/users/1/profile/logout
+Allows a user to log out of their account. remove the set jwt cookies
+
+[//]: # (#### 4. http://localhost:8000/api/users/1/profile/createRoom)
+#### 4. http://localhost:8000//api/users/1/profile/chat/rooms
+Returns a list of all available chat rooms. with the list of user who join which room.
+
+#### 5. http://localhost:8000/api/users/1/profile/chat/rooms/1
+`/api/users/{userID}/profile/chat/rooms/{roomId}` Returns the details of a specific chat room in this case Room1, with list of users who join Room1.
+
+#### 6. http://localhost:8000/api/users/1/profile/createRoom
+Allow user to create Room send body `{
+"id": "1",
+"name": "room1"
+}`
+
+#### 6. ws://localhost:8000/api/users/1/profile/chat/room/1/messages
+Allows a user to send a message to a specific chat room. As you can see its not a http request its a websocket to join the Room1 and broadcast message to every one who joined the room but make sure 1st create that room.
+
+#### 7. http://localhost:8000/api/users/1/profile/chat/rooms/1/messages
+Returns a list of messages for a specific chat room.
 
 ## Explanation of used methods
 ### DB
