@@ -41,6 +41,8 @@ Allows a user to log in to their account. and set jwt cookies for front-end deve
 #### NoTe :
 Once user login, It will Use the resources if it authorized, Keep in mind `ADD 'Token' as a key and 'JWT token' as value into http.Header` otherwise will be unauthorized for resources.
 
+![how to add token](img/Token.png)
+
 After login the path `/api/users/{userID}/profile` will be use for checking the Authorization like: users having profile `{userID}` Authorized for `...`
 
 #### 3. http://localhost:8000/api/users/1/profile/logout
@@ -61,6 +63,8 @@ Allow user to create Room send body `{
 
 #### 6. ws://localhost:8000/api/users/1/profile/chat/room/1/messages
 Allows a user to send a message to a specific chat room. As you can see its not a http request its a websocket to join the Room1 and broadcast message to every one who joined the room but make sure 1st create that room.
+
+![how to call websocket through postman](img/ws.png)
 
 #### 7. http://localhost:8000/api/users/1/profile/chat/rooms/1/messages
 Returns a list of messages for a specific chat room.
